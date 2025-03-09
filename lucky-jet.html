@@ -123,6 +123,24 @@
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+
+        function parseSignalsFromUrl(argumentName) {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const signalsString = urlParams.get(argumentName);
+
+            // Проверяем, есть ли аргумент
+            if (signalsString) {
+                const numbersArray = signalsString.split('|');
+                return numbersArray;
+            } else {
+                // Если аргумент не передан, возвращаем пустой массив
+                return [];
+            }
+        }
+        
+        const signalsPreset = parseSignalsFromUrl("signals");
+
         //Функция для генерации случайного числа
         function getRandomFloat(min, max, decimals) {
             const str = (Math.random() * (max - min) + min).toFixed(decimals);
@@ -132,22 +150,11 @@
         //Нажатие на кнопку "GET SIGNAL"
         luckyjetGetSignal = document.getElementById("signalDisplay"); 
         signalHint = document.getElementById("signalHint"); 
-        signalText = document.getElementById("signalText"); 
-
-        luckyjetGetSignal.onclick = function () {
-            let receivingSignal = getRandomFloat(1.00, 3.99, 2);
-
-            if ((receivingSignal.toString().length == 3)) {
-                receivingSignal += "0";
-            } if ((receivingSignal.toString().length == 1)) {
-                receivingSignal += ".00";
-            }
-
-
-            signalHint.classList.add("hidden");
-            signalText.classList.remove("hidden");
-
-            signalText.innerHTML = `x${receivingSignal}`;
+        signalText = document.getElementById("signalText");
+        
+        function showSignal(newSignalText, deactiveDelay) {
+            // Обновление значения 
+            signalText.innerHTML = newSignalText;
             luckyjetGetSignal.disabled = true;
             luckyjetGetSignal.classList.add("signals-deactivated");
 
@@ -158,7 +165,39 @@
             setTimeout(function () {
                 luckyjetGetSignal.disabled = false;
                 luckyjetGetSignal.classList.remove("signals-deactivated");
-            }, 4000);
+            }, deactiveDelay);
+        }
+
+        let signalIndex = 0;
+
+        luckyjetGetSignal.onclick = function () {
+            // Если первое нажатие - делаем сигнал видимым
+            if (signalIndex === 0) {
+                signalHint.classList.add("hidden");
+                signalText.classList.remove("hidden");
+            }
+
+            // Получаем сигнал, если они не заданы. Иначе берём из переданных в url
+            let receivingSignal;
+            let delay = 4000;
+            if (signalsPreset.length === 0) {
+                receivingSignal = getRandomFloat(1.00, 3.99, 2);
+            }
+            else {
+                signalIndex = (signalIndex+1 > signalsPreset.length) ? 0 : signalIndex;
+                receivingSignal = signalsPreset[signalIndex];
+                delay = 0;
+            }
+
+            // Отображаем новый сигнал
+            if ((receivingSignal.toString().length == 3)) {
+                receivingSignal += "0";
+            } 
+            if ((receivingSignal.toString().length == 1)) {
+                receivingSignal += ".00";
+            }
+            showSignal(`x${receivingSignal}`, delay);
+            signalIndex += 1;
         }
     </script>
 </body>
